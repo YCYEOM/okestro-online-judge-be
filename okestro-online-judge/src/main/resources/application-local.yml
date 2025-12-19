@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:32006/maestro
+    username: maestro
+    password: okestro2018!
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket-name: my-bucket
+  testcase-bucket-name: okestro-testcases
+
+judge0:
+  api-url: http://localhost:2358
+  authn-token: 39BF5B3EBEE27083B51AA246888EB74970F12920EBBE92DF534F97F314D07608
+  authz-token: 39BF5B3EBEE27083B51AA246888EB74970F12920EBBE92DF534F97F314D07608
+

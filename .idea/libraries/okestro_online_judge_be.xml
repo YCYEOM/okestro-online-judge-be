@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="okestro-online-judge-be">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/okestro-online-judge-be.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

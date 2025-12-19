@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Judge0 Server - API 엔드포인트 (커스텀 이미지 사용)
+  judge0-server:
+    image: hjkwon4202/judge0:custom
+    container_name: judge0-server
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "2358:2358"
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    networks:
+      - judge0-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2358/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Judge0 Workers - 실제 코드 실행 (커스텀 이미지 사용)
+  judge0-worker:
+    image: hjkwon4202/judge0:custom
+    container_name: judge0-worker
+    restart: unless-stopped
+    privileged: true
+    command: ["./scripts/workers"]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    networks:
+      - judge0-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # PostgreSQL - Judge0 데이터베이스
+  judge0-db:
+    image: postgres:16.2
+    container_name: judge0-db
+    restart: unless-stopped
+    env_file: judge0.conf
+    volumes:
+      - judge0-postgres-data:/var/lib/postgresql/data
+    networks:
+      - judge0-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U judge0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - 작업 큐 관리
+  judge0-redis:
+    image: redis:7.2.4
+    container_name: judge0-redis
+    restart: unless-stopped
+    command: ["bash", "-c", "docker-entrypoint.sh --appendonly no --requirepass $$REDIS_PASSWORD"]
+    env_file: judge0.conf
+    volumes:
+      - judge0-redis-data:/data
+    networks:
+      - judge0-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  judge0-network:
+    driver: bridge
+
+volumes:
+  judge0-postgres-data:
+  judge0-redis-data:

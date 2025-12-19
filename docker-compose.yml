@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # ────────────────────────────────
+  # 🖥️ Backend API Server
+  # ────────────────────────────────
+  backend:
+    build:
+      context: ./okestro-online-judge
+      dockerfile: Dockerfile
+    container_name: oj-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=prod
+
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/okestro_oj
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-that-should-be-at-least-256-bits}
+
+      # MinIO
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+
+      # Judge0
+      - JUDGE0_API_URL=${JUDGE0_API_URL:-http://52.79.146.35:2358}
+      - JUDGE0_API_TOKEN=${JUDGE0_API_TOKEN:-}
+
+      # Mail (Optional)
+      - SPRING_MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - SPRING_MAIL_PORT=${MAIL_PORT:-587}
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME:-}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - oj-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ────────────────────────────────
+  # 🐘 PostgreSQL Database
+  # ────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: oj-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=okestro_oj
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - oj-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────
+  # 📦 MinIO Object Storage
+  # ────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: oj-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - oj-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  oj-network:
+    driver: bridge

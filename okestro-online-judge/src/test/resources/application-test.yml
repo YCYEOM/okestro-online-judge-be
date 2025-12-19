@@ -1,0 +1,35 @@
+# Test configuration
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+# JWT test configuration
+jwt:
+  secret: dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yand0dG9rZW5nZW5lcmF0aW9uYW5kdmFsaWRhdGlvbjEyMzQ1Njc4OTA=
+  access-token-expiration: 1800000
+  refresh-token-expiration: 604800000
+
+# Judge0 test configuration
+judge0:
+  api-url: http://52.79.146.35:2358
+  authn-token: 39BF5B3EBEE27083B51AA246888EB74970F12920EBBE92DF534F97F314D07608
+  authz-token: 39BF5B3EBEE27083B51AA246888EB74970F12920EBBE92DF534F97F314D07608
+  cpu-time-limit: 2.0
+  memory-limit: 128000
+  max-retries: 20
+  retry-delay-ms: 1000
+
+# MinIO test configuration
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket-name: test-bucket

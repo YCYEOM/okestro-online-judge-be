@@ -1,0 +1,11 @@
+build
+.gradle
+.git
+.gitignore
+*.md
+*.log
+.env*
+.vscode
+.idea
+*.tar
+*.zip
